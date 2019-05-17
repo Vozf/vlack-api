@@ -1,0 +1,52 @@
+name:                hblog-scotty
+version:             0.1.0.0
+github:              "githubuser/Spock-example"
+license:             BSD3
+author:              "Author name here"
+maintainer:          "example@example.com"
+copyright:           "2019 Author name here"
+
+extra-source-files:
+  - README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/Spock-example#readme>
+
+dependencies:
+  - base >= 4.7 && < 5
+  - scotty >= 0.9.1
+  - bytestring >= 0.9 && < 0.11
+  - text >= 0.11 && < 2.0
+  - mysql >= 0.1.1.8
+  - mysql-simple >= 0.2.2.5
+  - aeson >= 0.6 && < 2
+  - HTTP >= 4000.2.19
+  - transformers >= 0.4.3.0
+  - wai >= 3.0.2.3
+  - wai-middleware-static >= 0.7.0.1
+  - wai-extra >= 3.0.7
+  - resource-pool >= 0.2.3.2
+  - configurator >= 0.3.0.0
+  - MissingH >= 1.3.0.1
+
+library:
+  source-dirs: src
+
+executables:
+  hblog-scotty-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - hblog-scotty
+
+
