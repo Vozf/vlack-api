@@ -6,6 +6,7 @@ import           Control.Applicative
 import           Data.Aeson
 import           Data.Text.Lazy
 import           Data.Text.Lazy.Encoding
+import           Data.Time.Clock         (UTCTime)
 
 data Article =
     Article Integer Text Text -- id title bodyText
@@ -20,3 +21,11 @@ instance FromJSON Article where
 instance ToJSON Article where
     toJSON (Article id title bodyText) =
         object ["id" .= id, "title" .= title, "bodyText" .= bodyText]
+
+data Chat =
+    Chat Integer Text Integer UTCTime -- id title userId date
+    deriving (Show)
+
+instance ToJSON Chat where
+    toJSON (Chat id title userId date) =
+        object ["id" .= id, "title" .= title, "userId" .= userId, "date" .= date]

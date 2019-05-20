@@ -27,3 +27,6 @@ updatedArticle article = json ()
 
 deletedArticle :: TL.Text -> ActionM ()
 deletedArticle id = json ()
+
+chatsList :: [Chat] -> ActionM ()
+chatsList chats = json chats

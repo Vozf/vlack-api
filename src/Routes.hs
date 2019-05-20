@@ -55,6 +55,10 @@ routes pool = do
         deleteArticle pool id -- delete the article from the DB
         deletedArticle id -- show info that the article was deleted
 
+    get "/chats" $ do
+        chats <- liftIO $ listChats pool
+        chatsList chats
+
 -- The function knows which resources are available only for the
 -- authenticated users
 protectedResources :: Request -> IO Bool

@@ -12,6 +12,7 @@ import           Data.Pool                          (Pool, createPool,
 import qualified Data.Text                          as T
 import qualified Data.Text.Lazy                     as TL
 import qualified Data.Text.Lazy.Encoding            as TL
+import           Data.Time.Clock                    (UTCTime)
 import qualified Database.MySQL.Base                as M
 import           Database.MySQL.Simple
 import           Database.MySQL.Simple.QueryParams
@@ -133,3 +134,12 @@ deleteArticle :: Pool Connection -> TL.Text -> ActionT TL.Text IO ()
 deleteArticle pool id = do
     liftIO $ execSqlT pool [id] "DELETE FROM article WHERE id=?"
     return ()
+
+listChats :: Pool Connection -> IO [Chat]
+listChats pool = do
+    res <-
+        fetchSimple pool "SELECT * FROM chat ORDER BY id DESC" :: IO [( Integer
+                                                                      , TL.Text
+                                                                      , Integer
+                                                                      , UTCTime)]
+    return $ (\(id, title, userId, date) -> Chat id title userId date) <$> res
