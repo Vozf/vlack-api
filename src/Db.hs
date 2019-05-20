@@ -142,12 +142,27 @@ listChats pool = do
                                                                       , TL.Text
                                                                       , Integer
                                                                       , UTCTime)]
-    return $ (\(id, title, userId, date) -> Chat id title userId date) <$> res
+    return $ (\(id, title, userId, createdAt) -> Chat id title userId createdAt) <$> res
 
-findChat :: Pool Connection -> TL.Text -> IO (Maybe Chat)
+findChat :: Pool Connection -> TL.Text -> IO (Maybe ChatWithMessages)
 findChat pool id = do
-    res <- fetch pool (Only id) "SELECT * FROM chat WHERE id=?"
-    return $ firstChat res
-  where
-    firstChat ((id, title, userId, date):_) = Just $ Chat id title userId date
-    firstChat _                             = Nothing
+    chatRes <-
+        fetch pool (Only id) "SELECT * FROM chat WHERE id=?" :: IO [( Integer
+                                                                    , TL.Text
+                                                                    , Integer
+                                                                    , UTCTime)]
+    messagesRes <-
+        fetch pool (Only id) "SELECT * FROM message WHERE chatId=?" :: IO [( Integer
+                                                                           , TL.Text
+                                                                           , Integer
+                                                                           , Integer
+                                                                           , UTCTime
+                                                                           , UTCTime)]
+    let firstChat ((id, title, userId, createdAt):_) = Just $ Chat id title userId createdAt
+        firstChat _ = Nothing
+        maybeChat = firstChat chatRes
+        messages =
+            (\(id, value, userId, chatId, createdAt, updatedAt) ->
+                 Message id value userId chatId createdAt updatedAt) <$>
+            messagesRes
+     in return $ ChatWithMessages <$> maybeChat <*> pure messages

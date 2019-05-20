@@ -33,4 +33,8 @@ chatsList chats = json chats
 
 viewChat :: Maybe Chat -> ActionM ()
 viewChat (Just chat) = json chat
-viewChat Nothing = json ()
+viewChat Nothing     = json ()
+
+viewChatWithMessages :: Maybe ChatWithMessages -> ActionM ()
+viewChatWithMessages (Just chat) = json chat
+viewChatWithMessages Nothing     = json ()

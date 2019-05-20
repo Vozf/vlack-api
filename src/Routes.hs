@@ -54,16 +54,17 @@ routes pool = do
         id <- param "id" :: ActionM TL.Text -- get the article id
         deleteArticle pool id -- delete the article from the DB
         deletedArticle id -- show info that the article was deleted
-
     get "/chats" $ do
         chats <- liftIO $ listChats pool
         chatsList chats
-
     get "/chats/:id" $ do
         id <- param "id" :: ActionM TL.Text
-        maybeChat <- liftIO $ findChat pool id
-        viewChat maybeChat
+        maybeChatWithMessages <- liftIO $ findChat pool id
+        viewChatWithMessages maybeChatWithMessages
 
+--    post "/chats/:id" $ do
+--        id <- param "id" :: ActionM TL.Text
+--        article <- getArticleParam
 -- The function knows which resources are available only for the
 -- authenticated users
 protectedResources :: Request -> IO Bool

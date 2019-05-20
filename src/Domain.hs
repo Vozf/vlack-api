@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 module Domain where
 
@@ -23,9 +24,43 @@ instance ToJSON Article where
         object ["id" .= id, "title" .= title, "bodyText" .= bodyText]
 
 data Chat =
-    Chat Integer Text Integer UTCTime -- id title userId date
-    deriving (Show)
+    Chat
+        { id        :: Integer
+        , title     :: Text
+        , userId    :: Integer
+        , createdAt :: UTCTime
+        }
 
 instance ToJSON Chat where
-    toJSON (Chat id title userId date) =
-        object ["id" .= id, "title" .= title, "userId" .= userId, "date" .= date]
+    toJSON (Chat id title userId createdAt) =
+        object ["id" .= id, "title" .= title, "userId" .= userId, "date" .= createdAt]
+
+data Message =
+    Message
+        { id        :: Integer
+        , value     :: Text
+        , userId    :: Integer
+        , chatId    :: Integer
+        , createdAt :: UTCTime
+        , updatedAt :: UTCTime
+        }
+
+instance ToJSON Message where
+    toJSON (Message id value userId chatId createdAt updatedAt) =
+        object
+            [ "id" .= id
+            , "value" .= value
+            , "userId" .= userId
+            , "chatId" .= chatId
+            , "createdAt" .= createdAt
+            , "updatedAt" .= updatedAt
+            ]
+
+data ChatWithMessages =
+    ChatWithMessages
+        { chat     :: Chat
+        , messages :: [Message]
+        }
+
+instance ToJSON ChatWithMessages where
+    toJSON (ChatWithMessages chat messages) = object ["chat" .= chat, "messages" .= messages]
