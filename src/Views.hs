@@ -30,3 +30,7 @@ deletedArticle id = json ()
 
 chatsList :: [Chat] -> ActionM ()
 chatsList chats = json chats
+
+viewChat :: Maybe Chat -> ActionM ()
+viewChat (Just chat) = json chat
+viewChat Nothing = json ()

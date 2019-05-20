@@ -59,6 +59,11 @@ routes pool = do
         chats <- liftIO $ listChats pool
         chatsList chats
 
+    get "/chats/:id" $ do
+        id <- param "id" :: ActionM TL.Text
+        maybeChat <- liftIO $ findChat pool id
+        viewChat maybeChat
+
 -- The function knows which resources are available only for the
 -- authenticated users
 protectedResources :: Request -> IO Bool

@@ -143,3 +143,11 @@ listChats pool = do
                                                                       , Integer
                                                                       , UTCTime)]
     return $ (\(id, title, userId, date) -> Chat id title userId date) <$> res
+
+findChat :: Pool Connection -> TL.Text -> IO (Maybe Chat)
+findChat pool id = do
+    res <- fetch pool (Only id) "SELECT * FROM chat WHERE id=?"
+    return $ firstChat res
+  where
+    firstChat ((id, title, userId, date):_) = Just $ Chat id title userId date
+    firstChat _                             = Nothing
