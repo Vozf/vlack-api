@@ -38,3 +38,7 @@ viewChat Nothing     = json ()
 viewChatWithMessages :: Maybe ChatWithMessages -> ActionM ()
 viewChatWithMessages (Just chat) = json chat
 viewChatWithMessages Nothing     = json ()
+
+createdMessage :: Maybe Message -> ActionM ()
+createdMessage (Just message) = json message
+createdMessage Nothing = json ()

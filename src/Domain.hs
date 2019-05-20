@@ -7,7 +7,7 @@ import           Control.Applicative
 import           Data.Aeson
 import           Data.Text.Lazy
 import           Data.Text.Lazy.Encoding
-import           Data.Time.Clock         (UTCTime)
+import           Data.Time
 
 data Article =
     Article Integer Text Text -- id title bodyText
@@ -44,6 +44,19 @@ data Message =
         , createdAt :: UTCTime
         , updatedAt :: UTCTime
         }
+    deriving (Show)
+
+zeroTime :: UTCTime
+zeroTime = UTCTime (fromGregorian 1 0 0) (secondsToDiffTime 0)
+
+instance FromJSON Message where
+    parseJSON (Object v) =
+        Message <$> v .:? "id" .!= 0 <*> -- the field "id" is optional
+        v .: "value" <*>
+        v .: "userId" <*>
+        v .: "chatId" <*>
+        v .:? "createdAt" .!= zeroTime <*>
+        v .:? "updatedAt" .!= zeroTime
 
 instance ToJSON Message where
     toJSON (Message id value userId chatId createdAt updatedAt) =

@@ -166,3 +166,9 @@ findChat pool id = do
                  Message id value userId chatId createdAt updatedAt) <$>
             messagesRes
      in return $ ChatWithMessages <$> maybeChat <*> pure messages
+
+insertMessage :: Pool Connection -> Maybe Message -> IO ()
+insertMessage pool Nothing = return ()
+insertMessage pool (Just (Message _ value userId chatId _ _)) = do
+    execSqlT pool (value, userId, chatId) "INSERT INTO message(value, userId, chatId) VALUES(?,?,?)"
+    return ()

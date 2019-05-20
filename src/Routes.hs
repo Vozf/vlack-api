@@ -61,10 +61,12 @@ routes pool = do
         id <- param "id" :: ActionM TL.Text
         maybeChatWithMessages <- liftIO $ findChat pool id
         viewChatWithMessages maybeChatWithMessages
+    post "/chats/:id" $ do
+        id <- param "id" :: ActionM TL.Text
+        message <- getMessageParam
+        liftIO $ insertMessage pool message
+        createdMessage message
 
---    post "/chats/:id" $ do
---        id <- param "id" :: ActionM TL.Text
---        article <- getArticleParam
 -- The function knows which resources are available only for the
 -- authenticated users
 protectedResources :: Request -> IO Bool
@@ -82,3 +84,9 @@ getArticleParam = do
     return $ (decode b :: Maybe Article)
   where
     makeArticle s = ""
+
+-- Parse the request body into the Article
+getMessageParam :: ActionT TL.Text IO (Maybe Message)
+getMessageParam = do
+    b <- body
+    return (decode b :: Maybe Message)
