@@ -13,6 +13,7 @@ import qualified Data.Text                          as T
 import qualified Data.Text.Lazy                     as TL
 import qualified Data.Text.Lazy.Encoding            as TL
 import           Data.Time.Clock                    (UTCTime)
+import           Data.Tuple.Curry
 import qualified Database.MySQL.Base                as M
 import           Database.MySQL.Simple
 import           Database.MySQL.Simple.QueryParams
@@ -20,6 +21,7 @@ import           Database.MySQL.Simple.QueryResults
 import           Database.MySQL.Simple.Types
 import           GHC.Generics                       (Generic)
 import           GHC.Int
+import           Safe                               (headMay)
 import           Web.Scotty.Internal.Types          (ActionT)
 
 -- DbConfig contains info needed to connect to MySQL server
@@ -142,7 +144,7 @@ listChats pool = do
                                                                       , TL.Text
                                                                       , Integer
                                                                       , UTCTime)]
-    return $ (\(id, title, userId, createdAt) -> Chat id title userId createdAt) <$> res
+    return $ uncurryN Chat <$> res
 
 findChat :: Pool Connection -> TL.Text -> IO (Maybe ChatWithMessages)
 findChat pool id = do
@@ -158,14 +160,9 @@ findChat pool id = do
                                                                            , Integer
                                                                            , UTCTime
                                                                            , UTCTime)]
-    let firstChat ((id, title, userId, createdAt):_) = Just $ Chat id title userId createdAt
-        firstChat _ = Nothing
-        maybeChat = firstChat chatRes
-        messages =
-            (\(id, value, userId, chatId, createdAt, updatedAt) ->
-                 Message id value userId chatId createdAt updatedAt) <$>
-            messagesRes
-     in return $ ChatWithMessages <$> maybeChat <*> pure messages
+    let firstChat = uncurryN Chat <$> headMay chatRes
+        messages = uncurryN Message <$> messagesRes
+     in return $ ChatWithMessages <$> firstChat <*> pure messages
 
 insertMessage :: Pool Connection -> Maybe Message -> IO ()
 insertMessage pool Nothing = return ()
