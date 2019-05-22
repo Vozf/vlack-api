@@ -144,22 +144,25 @@ listChats pool = do
     chatsAndMessagesRes <-
         fetchSimple
             pool
-            "SELECT * FROM chat INNER JOIN message\
-             	\ ON message.id = (SELECT id FROM message WHERE chatId = chat.id order by createdAt limit 1)\
-             \ ORDER BY chat.createdAt DESC" :: IO [( Integer
-                                                    , TL.Text
-                                                    , Integer
-                                                    , UTCTime
-                                                    , Integer
-                                                    , TL.Text
-                                                    , Integer
-                                                    , Integer
-                                                    , UTCTime
-                                                    , UTCTime)]
+            "SELECT chat.*, message.*, user.name, user.avatarURL  FROM chat INNER JOIN message\
+              	\ ON message.id = (SELECT id FROM message WHERE chatId = chat.id order by createdAt limit 1)\
+                \ join user on message.userId = user.id\
+              \ ORDER BY chat.id DESC;" :: IO [( Integer
+                                              , TL.Text
+                                              , Integer
+                                              , UTCTime
+                                              , Integer
+                                              , TL.Text
+                                              , Integer
+                                              , Integer
+                                              , UTCTime
+                                              , UTCTime
+                                              , TL.Text
+                                              , TL.Text)]
     let mapChatAndMessage (chat, message) =
             ChatWithLastMessage (uncurryN Chat chat) (uncurryN Message message)
-        splitChatAndMessage (c1, c2, c3, c4, m1, m2, m3, m4, m5, m6) =
-            ((c1, c2, c3, c4), (m1, m2, m3, m4, m5, m6))
+        splitChatAndMessage (c1, c2, c3, c4, m1, m2, m3, m4, m5, m6, m7, m8) =
+            ((c1, c2, c3, c4), (m1, m2, m3, m4, m5, m6, m7, m8))
         getChatWithMessage res = mapChatAndMessage . splitChatAndMessage <$> res
      in return $ getChatWithMessage chatsAndMessagesRes
 
@@ -171,18 +174,24 @@ findChat pool id = do
                                                                     , Integer
                                                                     , UTCTime)]
     messagesRes <-
-        fetch pool (Only id) "SELECT * FROM message WHERE chatId=?" :: IO [( Integer
-                                                                           , TL.Text
-                                                                           , Integer
-                                                                           , Integer
-                                                                           , UTCTime
-                                                                           , UTCTime)]
+        fetch
+            pool
+            (Only id)
+            "SELECT message.*, user.name, user.avatarURL FROM message\
+         \ join user on message.userId = user.id WHERE chatId=?" :: IO [( Integer
+                                                                        , TL.Text
+                                                                        , Integer
+                                                                        , Integer
+                                                                        , UTCTime
+                                                                        , UTCTime
+                                                                        , TL.Text
+                                                                        , TL.Text)]
     let firstChat = uncurryN Chat <$> headMay chatRes
         messages = uncurryN Message <$> messagesRes
      in return $ ChatWithMessages <$> firstChat <*> pure messages
 
-insertMessage :: Pool Connection -> TL.Text -> Maybe Message -> IO (Either TL.Text ())
+insertMessage :: Pool Connection -> TL.Text -> Maybe NewMessageBody -> IO (Either TL.Text ())
 insertMessage pool _ Nothing = return $ Left "Message can't be parsed"
-insertMessage pool chatId (Just (Message _ value userId _ _ _)) = do
+insertMessage pool chatId (Just (NewMessageBody value userId)) = do
     execSqlT pool (value, userId, chatId) "INSERT INTO message(value, userId, chatId) VALUES(?,?,?)"
     return $ Right ()

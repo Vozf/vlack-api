@@ -93,7 +93,7 @@ getArticleParam = do
     makeArticle s = ""
 
 -- Parse the request body into the Article
-getMessageParam :: ActionT TL.Text IO (Maybe Message)
+getMessageParam :: ActionT TL.Text IO (Maybe NewMessageBody)
 getMessageParam = do
     b <- body
-    return (decode b :: Maybe Message)
+    return (decode b :: Maybe NewMessageBody)

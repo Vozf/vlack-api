@@ -35,6 +35,15 @@ instance ToJSON Chat where
     toJSON (Chat id title userId createdAt) =
         object ["id" .= id, "title" .= title, "userId" .= userId, "createdAt" .= createdAt]
 
+data NewMessageBody =
+    NewMessageBody
+        { value  :: Text
+        , userId :: Integer
+        }
+
+instance FromJSON NewMessageBody where
+    parseJSON (Object v) = NewMessageBody <$> v .: "value" <*> v .: "userId"
+
 data Message =
     Message
         { id        :: Integer
@@ -43,23 +52,13 @@ data Message =
         , chatId    :: Integer
         , createdAt :: UTCTime
         , updatedAt :: UTCTime
+        , name  :: Text
+        , avatarURL :: Text
         }
     deriving (Show)
 
-zeroTime :: UTCTime
-zeroTime = UTCTime (fromGregorian 1 0 0) (secondsToDiffTime 0)
-
-instance FromJSON Message where
-    parseJSON (Object v) =
-        Message <$> v .:? "id" .!= 0 <*> -- the field "id" is optional
-        v .: "value" <*>
-        v .: "userId" <*>
-        v .:? "chatId" .!= 0 <*>
-        v .:? "createdAt" .!= zeroTime <*>
-        v .:? "updatedAt" .!= zeroTime
-
 instance ToJSON Message where
-    toJSON (Message id value userId chatId createdAt updatedAt) =
+    toJSON (Message id value userId chatId createdAt updatedAt name avatarURL) =
         object
             [ "id" .= id
             , "value" .= value
@@ -67,6 +66,8 @@ instance ToJSON Message where
             , "chatId" .= chatId
             , "createdAt" .= createdAt
             , "updatedAt" .= updatedAt
+            , "name" .= name
+            , "avatarURL" .= avatarURL
             ]
 
 data ChatWithLastMessage =
@@ -77,10 +78,7 @@ data ChatWithLastMessage =
 
 instance ToJSON ChatWithLastMessage where
     toJSON (ChatWithLastMessage chat lastMessage) =
-        object
-            [ "chat" .= chat
-            , "lastMessage" .= lastMessage
-            ]
+        object ["chat" .= chat, "lastMessage" .= lastMessage]
 
 data ChatWithMessages =
     ChatWithMessages
