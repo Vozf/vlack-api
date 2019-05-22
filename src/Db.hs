@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Db where
@@ -137,14 +138,29 @@ deleteArticle pool id = do
     liftIO $ execSqlT pool [id] "DELETE FROM article WHERE id=?"
     return ()
 
-listChats :: Pool Connection -> IO [Chat]
+listChats :: Pool Connection -> IO [ChatWithLastMessage]
 listChats pool = do
-    res <-
-        fetchSimple pool "SELECT * FROM chat ORDER BY id DESC" :: IO [( Integer
-                                                                      , TL.Text
-                                                                      , Integer
-                                                                      , UTCTime)]
-    return $ uncurryN Chat <$> res
+    chatsAndMessagesRes <-
+        fetchSimple
+            pool
+            "SELECT * FROM chat INNER JOIN message\
+             	\ ON message.id = (SELECT id FROM message WHERE chatId = chat.id order by createdAt limit 1)\
+             \ ORDER BY chat.createdAt DESC" :: IO [( Integer
+                                                    , TL.Text
+                                                    , Integer
+                                                    , UTCTime
+                                                    , Integer
+                                                    , TL.Text
+                                                    , Integer
+                                                    , Integer
+                                                    , UTCTime
+                                                    , UTCTime)]
+    let mapChatAndMessage (chat, message) =
+            ChatWithLastMessage (uncurryN Chat chat) (uncurryN Message message)
+        splitChatAndMessage (c1, c2, c3, c4, m1, m2, m3, m4, m5, m6) =
+            ((c1, c2, c3, c4), (m1, m2, m3, m4, m5, m6))
+        getChatWithMessage res = mapChatAndMessage . splitChatAndMessage <$> res
+     in return $ getChatWithMessage chatsAndMessagesRes
 
 findChat :: Pool Connection -> TL.Text -> IO (Maybe ChatWithMessages)
 findChat pool id = do

@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Views where
 
 import           Control.Monad.IO.Class
@@ -28,8 +25,8 @@ updatedArticle article = json ()
 deletedArticle :: TL.Text -> ActionM ()
 deletedArticle id = json ()
 
-chatsList :: [Chat] -> ActionM ()
-chatsList chats = json chats
+chatWithLastMessageList :: [ChatWithLastMessage] -> ActionM ()
+chatWithLastMessageList chats = json chats
 
 viewChat :: Maybe Chat -> ActionM ()
 viewChat (Just chat) = json chat
@@ -41,4 +38,4 @@ viewChatWithMessages Nothing     = json ()
 
 createdMessage :: Maybe Message -> ActionM ()
 createdMessage (Just message) = json message
-createdMessage Nothing = json ()
+createdMessage Nothing        = json ()

@@ -69,6 +69,19 @@ instance ToJSON Message where
             , "updatedAt" .= updatedAt
             ]
 
+data ChatWithLastMessage =
+    ChatWithLastMessage
+        { chat        :: Chat
+        , lastMessage :: Message
+        }
+
+instance ToJSON ChatWithLastMessage where
+    toJSON (ChatWithLastMessage chat lastMessage) =
+        object
+            [ "chat" .= chat
+            , "lastMessage" .= lastMessage
+            ]
+
 data ChatWithMessages =
     ChatWithMessages
         { chat     :: Chat

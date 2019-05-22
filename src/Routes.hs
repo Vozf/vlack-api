@@ -56,7 +56,7 @@ routes pool = do
         deletedArticle id -- show info that the article was deleted
     get "/chats" $ do
         chats <- liftIO $ listChats pool
-        chatsList chats
+        chatWithLastMessageList chats
     get "/chats/:id" $ do
         id <- param "id" :: ActionM TL.Text
         maybeChatWithMessages <- liftIO $ findChat pool id
