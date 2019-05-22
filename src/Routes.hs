@@ -5,6 +5,7 @@ module Routes
     ) where
 
 import           Auth
+import           CorsMiddleware
 import           Db
 import           Domain
 import           Views
@@ -24,6 +25,7 @@ import           Web.Scotty.Internal.Types            (ActionT)
 
 routes :: Pool Connection -> ScottyM ()
 routes pool = do
+    middleware allowCors
     middleware $ staticPolicy (noDots >-> addBase "static") -- serve static files
     middleware $ logStdout -- log all requests; for production use logStdout
     middleware $

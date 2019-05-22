@@ -37,6 +37,7 @@ dependencies:
   - time
   - tuple
   - safe
+  - wai-cors
 
 library:
   source-dirs: src
