@@ -180,8 +180,8 @@ findChat pool id = do
         messages = uncurryN Message <$> messagesRes
      in return $ ChatWithMessages <$> firstChat <*> pure messages
 
-insertMessage :: Pool Connection -> Maybe Message -> IO ()
-insertMessage pool Nothing = return ()
-insertMessage pool (Just (Message _ value userId chatId _ _)) = do
+insertMessage :: Pool Connection -> TL.Text -> Maybe Message -> IO ()
+insertMessage pool _ Nothing = return ()
+insertMessage pool chatId (Just (Message _ value userId _ _ _)) = do
     execSqlT pool (value, userId, chatId) "INSERT INTO message(value, userId, chatId) VALUES(?,?,?)"
     return ()

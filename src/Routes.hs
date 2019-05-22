@@ -64,7 +64,7 @@ routes pool = do
     post "/chats/:id" $ do
         id <- param "id" :: ActionM TL.Text
         message <- getMessageParam
-        liftIO $ insertMessage pool message
+        liftIO $ insertMessage pool id message
         createdMessage message
 
 -- The function knows which resources are available only for the

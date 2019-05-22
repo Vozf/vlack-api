@@ -54,7 +54,7 @@ instance FromJSON Message where
         Message <$> v .:? "id" .!= 0 <*> -- the field "id" is optional
         v .: "value" <*>
         v .: "userId" <*>
-        v .: "chatId" <*>
+        v .:? "chatId" .!= 0 <*>
         v .:? "createdAt" .!= zeroTime <*>
         v .:? "updatedAt" .!= zeroTime
 
