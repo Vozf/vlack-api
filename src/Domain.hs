@@ -52,13 +52,13 @@ data Message =
         , chatId    :: Integer
         , createdAt :: UTCTime
         , updatedAt :: UTCTime
-        , name  :: Text
+        , authorName  :: Text
         , avatarURL :: Text
         }
     deriving (Show)
 
 instance ToJSON Message where
-    toJSON (Message id value userId chatId createdAt updatedAt name avatarURL) =
+    toJSON (Message id value userId chatId createdAt updatedAt authorName avatarURL) =
         object
             [ "id" .= id
             , "value" .= value
@@ -66,7 +66,7 @@ instance ToJSON Message where
             , "chatId" .= chatId
             , "createdAt" .= createdAt
             , "updatedAt" .= updatedAt
-            , "name" .= name
+            , "authorName" .= authorName
             , "avatarURL" .= avatarURL
             ]
 
