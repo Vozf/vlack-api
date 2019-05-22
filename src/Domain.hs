@@ -33,7 +33,7 @@ data Chat =
 
 instance ToJSON Chat where
     toJSON (Chat id title userId createdAt) =
-        object ["id" .= id, "title" .= title, "userId" .= userId, "date" .= createdAt]
+        object ["id" .= id, "title" .= title, "userId" .= userId, "createdAt" .= createdAt]
 
 data Message =
     Message
