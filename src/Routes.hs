@@ -16,6 +16,7 @@ import           Data.Pool                            (Pool, createPool,
                                                        withResource)
 import qualified Data.Text.Lazy                       as TL
 import           Database.MySQL.Simple
+import           Network.HTTP.Types.Status            (status201, status400)
 import           Network.Wai
 import           Network.Wai.Middleware.HttpAuth
 import           Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
@@ -66,8 +67,12 @@ routes pool = do
     post "/chats/:id" $ do
         id <- param "id" :: ActionM TL.Text
         message <- getMessageParam
-        liftIO $ insertMessage pool id message
-        createdMessage message
+        eitherRes <- liftIO $ insertMessage pool id message
+        case eitherRes of
+            Left e -> do
+                status status400
+                text e
+            Right _ -> status status201
 
 -- The function knows which resources are available only for the
 -- authenticated users

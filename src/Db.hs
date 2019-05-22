@@ -13,6 +13,7 @@ import           Data.Pool                          (Pool, createPool,
 import qualified Data.Text                          as T
 import qualified Data.Text.Lazy                     as TL
 import qualified Data.Text.Lazy.Encoding            as TL
+import qualified Data.Text.Lazy.IO                  as TL
 import           Data.Time.Clock                    (UTCTime)
 import           Data.Tuple.Curry
 import qualified Database.MySQL.Base                as M
@@ -180,8 +181,8 @@ findChat pool id = do
         messages = uncurryN Message <$> messagesRes
      in return $ ChatWithMessages <$> firstChat <*> pure messages
 
-insertMessage :: Pool Connection -> TL.Text -> Maybe Message -> IO ()
-insertMessage pool _ Nothing = return ()
+insertMessage :: Pool Connection -> TL.Text -> Maybe Message -> IO (Either TL.Text ())
+insertMessage pool _ Nothing = return $ Left "Message can't be parsed"
 insertMessage pool chatId (Just (Message _ value userId _ _ _)) = do
     execSqlT pool (value, userId, chatId) "INSERT INTO message(value, userId, chatId) VALUES(?,?,?)"
-    return ()
+    return $ Right ()
