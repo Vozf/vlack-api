@@ -145,9 +145,9 @@ listChats pool = do
         fetchSimple
             pool
             "SELECT chat.*, message.*, user.name, user.avatarURL  FROM chat INNER JOIN message\
-              	\ ON message.id = (SELECT id FROM message WHERE chatId = chat.id order by createdAt limit 1)\
+              	\ ON message.id = (SELECT id FROM message WHERE chatId = chat.id order by createdAt DESC limit 1)\
                 \ join user on message.userId = user.id\
-              \ ORDER BY chat.id DESC;" :: IO [( Integer
+              \ ORDER BY chat.createdAt;" :: IO [( Integer
                                                , TL.Text
                                                , Integer
                                                , UTCTime
