@@ -148,17 +148,17 @@ listChats pool = do
               	\ ON message.id = (SELECT id FROM message WHERE chatId = chat.id order by createdAt limit 1)\
                 \ join user on message.userId = user.id\
               \ ORDER BY chat.id DESC;" :: IO [( Integer
-                                              , TL.Text
-                                              , Integer
-                                              , UTCTime
-                                              , Integer
-                                              , TL.Text
-                                              , Integer
-                                              , Integer
-                                              , UTCTime
-                                              , UTCTime
-                                              , TL.Text
-                                              , TL.Text)]
+                                               , TL.Text
+                                               , Integer
+                                               , UTCTime
+                                               , Integer
+                                               , TL.Text
+                                               , Integer
+                                               , Integer
+                                               , UTCTime
+                                               , UTCTime
+                                               , TL.Text
+                                               , TL.Text)]
     let mapChatAndMessage (chat, message) =
             ChatWithLastMessage (uncurryN Chat chat) (uncurryN Message message)
         splitChatAndMessage (c1, c2, c3, c4, m1, m2, m3, m4, m5, m6, m7, m8) =
@@ -166,7 +166,7 @@ listChats pool = do
         getChatWithMessage res = mapChatAndMessage . splitChatAndMessage <$> res
      in return $ getChatWithMessage chatsAndMessagesRes
 
-findChat :: Pool Connection -> TL.Text -> IO (Maybe ChatWithMessages)
+findChat :: Pool Connection -> TL.Text -> IO (Either TL.Text ChatWithMessages)
 findChat pool id = do
     chatRes <-
         fetch pool (Only id) "SELECT * FROM chat WHERE id=?" :: IO [( Integer
@@ -178,17 +178,20 @@ findChat pool id = do
             pool
             (Only id)
             "SELECT message.*, user.name, user.avatarURL FROM message\
-         \ join user on message.userId = user.id WHERE chatId=?" :: IO [( Integer
-                                                                        , TL.Text
-                                                                        , Integer
-                                                                        , Integer
-                                                                        , UTCTime
-                                                                        , UTCTime
-                                                                        , TL.Text
-                                                                        , TL.Text)]
-    let firstChat = uncurryN Chat <$> headMay chatRes
-        messages = uncurryN Message <$> messagesRes
-     in return $ ChatWithMessages <$> firstChat <*> pure messages
+         \ join user on message.userId = user.id WHERE chatId=? order by createdAt" :: IO [( Integer
+                                                                                           , TL.Text
+                                                                                           , Integer
+                                                                                           , Integer
+                                                                                           , UTCTime
+                                                                                           , UTCTime
+                                                                                           , TL.Text
+                                                                                           , TL.Text)]
+    case headMay chatRes of
+        Nothing -> return $ Left "No chat with such id found"
+        (Just chat) -> 
+            let firstChat = uncurryN Chat chat
+                messages = uncurryN Message <$> messagesRes
+             in return $ Right $ ChatWithMessages firstChat messages
 
 insertMessage :: Pool Connection -> TL.Text -> Maybe NewMessageBody -> IO (Either TL.Text ())
 insertMessage pool _ Nothing = return $ Left "Message can't be parsed"

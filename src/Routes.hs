@@ -62,8 +62,12 @@ routes pool = do
         chatWithLastMessageList chats
     get "/chats/:id" $ do
         id <- param "id" :: ActionM TL.Text
-        maybeChatWithMessages <- liftIO $ findChat pool id
-        viewChatWithMessages maybeChatWithMessages
+        eitherRes <- liftIO $ findChat pool id
+        case eitherRes of
+            Left e -> do
+                status status400
+                text e
+            Right chatWithMessages -> viewChatWithMessages chatWithMessages
     post "/chats/:id" $ do
         id <- param "id" :: ActionM TL.Text
         message <- getMessageParam

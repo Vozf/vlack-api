@@ -26,15 +26,14 @@ deletedArticle :: TL.Text -> ActionM ()
 deletedArticle id = json ()
 
 chatWithLastMessageList :: [ChatWithLastMessage] -> ActionM ()
-chatWithLastMessageList chats = json chats
+chatWithLastMessageList = json
 
 viewChat :: Maybe Chat -> ActionM ()
 viewChat (Just chat) = json chat
 viewChat Nothing     = json ()
 
-viewChatWithMessages :: Maybe ChatWithMessages -> ActionM ()
-viewChatWithMessages (Just chat) = json chat
-viewChatWithMessages Nothing     = json ()
+viewChatWithMessages :: ChatWithMessages -> ActionM ()
+viewChatWithMessages = json
 
 createdMessage :: Maybe Message -> ActionM ()
 createdMessage (Just message) = json message
