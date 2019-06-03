@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Auth where
 
 import           Db
@@ -14,10 +11,10 @@ import           Database.MySQL.Simple
 
 -- Encodes provided password with md5 and then compares it with the hash
 -- stored in the DB
-verifyCredentials :: Pool Connection -> B.ByteString -> B.ByteString -> IO Bool
-verifyCredentials pool user password = do
-    pwd <- findUserByLogin pool (BC.unpack user)
-    return $ comparePasswords pwd (BC.unpack password)
+verifyCredentials :: Pool Connection -> B.ByteString -> IO Bool
+verifyCredentials pool token = do
+    pwd <- findUserByLogin pool (BC.unpack token)
+    return $ comparePasswords pwd (BC.unpack token)
   where
     comparePasswords Nothing _         = False
     comparePasswords (Just p) password = p == (md5s $ Str password)

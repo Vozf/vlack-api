@@ -8,6 +8,7 @@ import           Auth
 import           CorsMiddleware
 import           Db
 import           Domain
+import           TokenAuth
 import           Views
 
 import           Control.Monad.IO.Class
@@ -30,9 +31,9 @@ routes pool = do
     middleware $ staticPolicy (noDots >-> addBase "static") -- serve static files
     middleware $ logStdout -- log all requests; for production use logStdout
     middleware $
-        basicAuth
+        tokenAuth
             (verifyCredentials pool) -- check if the user is authenticated for protected resources
-            "Haskell Blog Realm" {authIsProtected = protectedResources} -- function which restricts access to some routes only for authenticated users
+            "Haskell Blog Realm" {TokenAuth.authIsProtected = protectedResources} -- function which restricts access to some routes only for authenticated users
                        -- LIST
     get "/articles" $ do
         articles <- liftIO $ listArticles pool -- get the ist of articles for DB

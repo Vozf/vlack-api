@@ -39,6 +39,7 @@ dependencies:
   - safe
   - wai-cors
   - http-types
+  - jwt
 
 library:
   source-dirs: src
