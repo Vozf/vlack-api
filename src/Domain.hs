@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
@@ -8,6 +9,7 @@ import           Data.Aeson
 import           Data.Text.Lazy
 import           Data.Text.Lazy.Encoding
 import           Data.Time
+import           GHC.Generics            (Generic (..))
 
 data Article =
     Article Integer Text Text -- id title bodyText
@@ -30,19 +32,18 @@ data Chat =
         , userId    :: Integer
         , createdAt :: UTCTime
         }
+    deriving (Show, Generic)
 
-instance ToJSON Chat where
-    toJSON (Chat id title userId createdAt) =
-        object ["id" .= id, "title" .= title, "userId" .= userId, "createdAt" .= createdAt]
+instance ToJSON Chat
 
 data NewMessageBody =
     NewMessageBody
         { value  :: Text
         , userId :: Integer
         }
+    deriving (Show, Generic)
 
-instance FromJSON NewMessageBody where
-    parseJSON (Object v) = NewMessageBody <$> v .: "value" <*> v .: "userId"
+instance FromJSON NewMessageBody
 
 data Message =
     Message
@@ -55,39 +56,27 @@ data Message =
         , authorName :: Text
         , avatarURL  :: Text
         }
-    deriving (Show)
+    deriving (Show, Generic)
 
-instance ToJSON Message where
-    toJSON (Message id value userId chatId createdAt updatedAt authorName avatarURL) =
-        object
-            [ "id" .= id
-            , "value" .= value
-            , "userId" .= userId
-            , "chatId" .= chatId
-            , "createdAt" .= createdAt
-            , "updatedAt" .= updatedAt
-            , "authorName" .= authorName
-            , "avatarURL" .= avatarURL
-            ]
+instance ToJSON Message
 
 data ChatWithLastMessage =
     ChatWithLastMessage
         { chat        :: Chat
         , lastMessage :: Message
         }
+    deriving (Show, Generic)
 
-instance ToJSON ChatWithLastMessage where
-    toJSON (ChatWithLastMessage chat lastMessage) =
-        object ["chat" .= chat, "lastMessage" .= lastMessage]
+instance ToJSON ChatWithLastMessage
 
 data ChatWithMessages =
     ChatWithMessages
         { chat     :: Chat
         , messages :: [Message]
         }
+    deriving (Show, Generic)
 
-instance ToJSON ChatWithMessages where
-    toJSON (ChatWithMessages chat messages) = object ["chat" .= chat, "messages" .= messages]
+instance ToJSON ChatWithMessages
 
 data User =
     User
@@ -96,19 +85,8 @@ data User =
         , avatarURL :: Maybe Text
         , name      :: Maybe Text
         }
+    deriving (Show, Generic)
 
-instance ToJSON User where
-    toJSON (User id login avatarURL name) =
-        object
-            [ "id" .= id
-            , "login" .= login
-            , "avatarURL" .= avatarURL
-            , "name" .= name
-            ]
+instance ToJSON User
 
-instance FromJSON User where
-    parseJSON (Object v) =
-        User <$> v .: "id" <*> -- the field "id" is optional
-        v .: "login" <*>
-        v .: "avatarURL" <*>
-        v .: "name"
+instance FromJSON User
