@@ -46,14 +46,14 @@ instance FromJSON NewMessageBody where
 
 data Message =
     Message
-        { id        :: Integer
-        , value     :: Text
-        , userId    :: Integer
-        , chatId    :: Integer
-        , createdAt :: UTCTime
-        , updatedAt :: UTCTime
-        , authorName  :: Text
-        , avatarURL :: Text
+        { id         :: Integer
+        , value      :: Text
+        , userId     :: Integer
+        , chatId     :: Integer
+        , createdAt  :: UTCTime
+        , updatedAt  :: UTCTime
+        , authorName :: Text
+        , avatarURL  :: Text
         }
     deriving (Show)
 
@@ -88,3 +88,22 @@ data ChatWithMessages =
 
 instance ToJSON ChatWithMessages where
     toJSON (ChatWithMessages chat messages) = object ["chat" .= chat, "messages" .= messages]
+
+data User =
+    User
+        { id        :: Integer
+        , login     :: Text
+        , password  :: Text
+        , avatarURL :: Text
+        , name      :: Text
+        }
+
+instance ToJSON User where
+    toJSON (User id login password avatarURL name) =
+        object
+            [ "id" .= id
+            , "login" .= login
+            , "password" .= password
+            , "avatarURL" .= avatarURL
+            , "name" .= name
+            ]

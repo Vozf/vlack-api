@@ -8,6 +8,9 @@ import           Auth
 import           CorsMiddleware
 import           Db
 import           Domain
+import           Entity.Chat
+import           Entity.Message
+import           Entity.User
 import           TokenAuth
 import           Views
 
@@ -78,6 +81,15 @@ routes pool = do
                 status status400
                 text e
             Right _ -> status status201
+    get "/users/:id" $ do
+        id <- param "id" :: ActionM TL.Text
+        eitherRes <- liftIO $ getUser pool id
+        case eitherRes of
+            Left e -> do
+                status status400
+                text e
+            Right chatWithMessages -> Web.Scotty.json chatWithMessages
+ 
 
 -- The function knows which resources are available only for the
 -- authenticated users

@@ -1,5 +1,4 @@
 {-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Db where
@@ -13,9 +12,6 @@ import           Data.Pool                          (Pool, createPool,
 import qualified Data.Text                          as T
 import qualified Data.Text.Lazy                     as TL
 import qualified Data.Text.Lazy.Encoding            as TL
-import qualified Data.Text.Lazy.IO                  as TL
-import           Data.Time.Clock                    (UTCTime)
-import           Data.Tuple.Curry
 import qualified Database.MySQL.Base                as M
 import           Database.MySQL.Simple
 import           Database.MySQL.Simple.QueryParams
@@ -23,7 +19,6 @@ import           Database.MySQL.Simple.QueryResults
 import           Database.MySQL.Simple.Types
 import           GHC.Generics                       (Generic)
 import           GHC.Int
-import           Safe                               (headMay)
 import           Web.Scotty.Internal.Types          (ActionT)
 
 -- DbConfig contains info needed to connect to MySQL server
@@ -139,62 +134,3 @@ deleteArticle pool id = do
     liftIO $ execSqlT pool [id] "DELETE FROM article WHERE id=?"
     return ()
 
-listChats :: Pool Connection -> IO [ChatWithLastMessage]
-listChats pool = do
-    chatsAndMessagesRes <-
-        fetchSimple
-            pool
-            "SELECT chat.*, message.*, user.name, user.avatarURL  FROM chat INNER JOIN message\
-              	\ ON message.id = (SELECT id FROM message WHERE chatId = chat.id order by createdAt DESC limit 1)\
-                \ join user on message.userId = user.id\
-              \ ORDER BY chat.createdAt;" :: IO [( Integer
-                                               , TL.Text
-                                               , Integer
-                                               , UTCTime
-                                               , Integer
-                                               , TL.Text
-                                               , Integer
-                                               , Integer
-                                               , UTCTime
-                                               , UTCTime
-                                               , TL.Text
-                                               , TL.Text)]
-    let mapChatAndMessage (chat, message) =
-            ChatWithLastMessage (uncurryN Chat chat) (uncurryN Message message)
-        splitChatAndMessage (c1, c2, c3, c4, m1, m2, m3, m4, m5, m6, m7, m8) =
-            ((c1, c2, c3, c4), (m1, m2, m3, m4, m5, m6, m7, m8))
-        getChatWithMessage res = mapChatAndMessage . splitChatAndMessage <$> res
-     in return $ getChatWithMessage chatsAndMessagesRes
-
-findChat :: Pool Connection -> TL.Text -> IO (Either TL.Text ChatWithMessages)
-findChat pool id = do
-    chatRes <-
-        fetch pool (Only id) "SELECT * FROM chat WHERE id=?" :: IO [( Integer
-                                                                    , TL.Text
-                                                                    , Integer
-                                                                    , UTCTime)]
-    messagesRes <-
-        fetch
-            pool
-            (Only id)
-            "SELECT message.*, user.name, user.avatarURL FROM message\
-         \ join user on message.userId = user.id WHERE chatId=? order by createdAt" :: IO [( Integer
-                                                                                           , TL.Text
-                                                                                           , Integer
-                                                                                           , Integer
-                                                                                           , UTCTime
-                                                                                           , UTCTime
-                                                                                           , TL.Text
-                                                                                           , TL.Text)]
-    case headMay chatRes of
-        Nothing -> return $ Left "No chat with such id found"
-        (Just chat) -> 
-            let firstChat = uncurryN Chat chat
-                messages = uncurryN Message <$> messagesRes
-             in return $ Right $ ChatWithMessages firstChat messages
-
-insertMessage :: Pool Connection -> TL.Text -> Maybe NewMessageBody -> IO (Either TL.Text ())
-insertMessage pool _ Nothing = return $ Left "Message can't be parsed"
-insertMessage pool chatId (Just (NewMessageBody value userId)) = do
-    execSqlT pool (value, userId, chatId) "INSERT INTO message(value, userId, chatId) VALUES(?,?,?)"
-    return $ Right ()

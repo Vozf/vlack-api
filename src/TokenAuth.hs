@@ -1,7 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
---override funcs from httpAuth to work with token
+--override funcs from httpAuth to work with token.
+--tokenAuth is basicAuth but uses token instead of login and password
+
 module TokenAuth
     ( tokenAuth
     , authIsProtected
