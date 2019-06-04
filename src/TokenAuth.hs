@@ -59,6 +59,6 @@ instance IsString AuthSettings where
                           [ (hContentType, "text/plain")
                           , ("WWW-Authenticate", B.concat ["Basic realm=\"", realm, "\""])
                           ]
-                          "Basic authentication is required"
+                          "Token authentication is required"
             , authIsProtected = const $ return True
             }

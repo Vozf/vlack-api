@@ -105,3 +105,10 @@ instance ToJSON User where
             , "avatarURL" .= avatarURL
             , "name" .= name
             ]
+
+instance FromJSON User where
+    parseJSON (Object v) =
+        User <$> v .: "id" <*> -- the field "id" is optional
+        v .: "login" <*>
+        v .: "avatarURL" <*>
+        v .: "name"

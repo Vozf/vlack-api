@@ -40,6 +40,7 @@ dependencies:
   - wai-cors
   - http-types
   - jwt
+  - containers
 
 library:
   source-dirs: src
