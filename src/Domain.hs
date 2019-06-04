@@ -93,17 +93,15 @@ data User =
     User
         { id        :: Integer
         , login     :: Text
-        , password  :: Text
-        , avatarURL :: Text
-        , name      :: Text
+        , avatarURL :: Maybe Text
+        , name      :: Maybe Text
         }
 
 instance ToJSON User where
-    toJSON (User id login password avatarURL name) =
+    toJSON (User id login avatarURL name) =
         object
             [ "id" .= id
             , "login" .= login
-            , "password" .= password
             , "avatarURL" .= avatarURL
             , "name" .= name
             ]
