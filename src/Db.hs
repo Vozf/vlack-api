@@ -19,8 +19,8 @@ import           Database.MySQL.Simple.QueryResults
 import           Database.MySQL.Simple.Types
 import           GHC.Generics                       (Generic)
 import           GHC.Int
+import           Safe                               (headMay)
 import           Web.Scotty.Internal.Types          (ActionT)
-import Safe (headMay)
 
 -- DbConfig contains info needed to connect to MySQL server
 data DbConfig =
@@ -85,17 +85,6 @@ execSqlT :: QueryParams q => Pool M.Connection -> q -> Query -> IO Int64
 execSqlT pool args sql = withResource pool ins
   where
     ins conn = withTransaction conn $ execute conn sql args
-
---------------------------------------------------------------------------------
-findUserByLogin :: Pool Connection -> String -> IO (Maybe (Integer, String))
-findUserByLogin pool login = do
-    res <-
-        fetch pool (Only login) "SELECT id, password FROM user WHERE login=?" :: IO [( Integer
-                                                                                     , String)]
-    return $ idAndPassword res
-  where
-    idAndPassword [(userId, pwd)] = Just (userId, pwd)
-    idAndPassword _ = Nothing
 
 --------------------------------------------------------------------------------
 listArticles :: Pool Connection -> IO [Article]

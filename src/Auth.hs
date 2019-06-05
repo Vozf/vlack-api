@@ -1,24 +1,26 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Auth where
 
-import           Db
-
-import           Data.Aeson            (Result (..), Value, decode, fromJSON,
-                                        toJSON)
-import qualified Data.ByteString       as B
-import           Data.Char             (isSpace)
-import           Data.Hash.MD5         (Str (..), md5s)
-import           Data.Map              (fromList, (!?))
-import           Data.Pool             (Pool, createPool, withResource)
+import           Control.Monad.IO.Class (liftIO)
+import           Data.Aeson             (Result (..), Value, decode, fromJSON,
+                                         toJSON)
+import qualified Data.ByteString        as B
+import           Data.Char              (isSpace)
+import           Data.Hash.MD5          (Str (..), md5s)
+import           Data.Map               (fromList, (!?))
+import           Data.Pool              (Pool, createPool, withResource)
 import           Data.String
-import qualified Data.Text             as T
-import           Data.Text.Encoding    (decodeUtf8)
-import qualified Data.Text.Lazy        as TL
+import qualified Data.Text              as T
+import           Data.Text.Encoding     (decodeUtf8)
+import qualified Data.Text.Lazy         as TL
 import           Database.MySQL.Simple
-import           Domain                (User (User), LoginCredentials(LoginCredentials))
-import qualified Web.JWT               as JWT
-import           Web.Scotty            (ActionM, header)
+import           Domain                 (LoginCredentials (LoginCredentials),
+                                         User (User), password)
+import           Entity.User            (findUserByLogin, getUser)
+import qualified Web.JWT                as JWT
+import           Web.Scotty             (ActionM, header)
 
 verifyToken :: T.Text -> Pool Connection -> B.ByteString -> IO Bool
 verifyToken jwtSecret pool token =
@@ -37,7 +39,11 @@ createTokenFromCredentials pool jwtSecret (Just (LoginCredentials login password
                 then Right userId
                 else Left "Incorrect password"
         userIdEither = comparePasswords pwd (TL.unpack password)
-    return (jsonToToken jwtSecret . toJSON <$> userIdEither)
+    userEither <-
+        case userIdEither of
+            Left st      -> return $ Left st
+            Right userId -> getUser pool (TL.pack $ show userId)
+    return (jsonToToken jwtSecret . toJSON <$> userEither)
 
 getUserFromToken :: ActionM (Maybe User)
 getUserFromToken = do

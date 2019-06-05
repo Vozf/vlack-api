@@ -31,6 +31,16 @@ getUser pool id = do
             let user = uncurryN User firstUser
              in return $ Right user
 
+findUserByLogin :: Pool Connection -> String -> IO (Maybe (Integer, String))
+findUserByLogin pool login = do
+    res <-
+        fetch pool (Only login) "SELECT id, password FROM user WHERE login=?" :: IO [( Integer
+                                                                                     , String)]
+    return $ idAndPassword res
+  where
+    idAndPassword [(userId, pwd)] = Just (userId, pwd)
+    idAndPassword _ = Nothing
+
 registerUser :: Pool Connection -> Maybe RegisterCredentials -> IO (Either TL.Text ())
 registerUser pool Nothing = return $ Left "Empty User"
 registerUser pool (Just (RegisterCredentials login password avatarURL name)) = do
