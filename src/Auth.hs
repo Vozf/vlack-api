@@ -17,7 +17,7 @@ import           Data.Text.Encoding     (decodeUtf8)
 import qualified Data.Text.Lazy         as TL
 import           Database.MySQL.Simple
 import           Domain                 (LoginCredentials (LoginCredentials),
-                                         User (User), password)
+                                         User (User), id, login, password)
 import           Entity.User            (findUserByLogin, getUser)
 import qualified Web.JWT                as JWT
 import           Web.Scotty             (ActionM, header)
@@ -58,6 +58,12 @@ getUserFromToken = do
                         Success a -> Just a :: Maybe User
     return user
 
+getUserIdFromToken :: ActionM (Maybe Integer)
+getUserIdFromToken = do
+    userMay <- getUserFromToken
+    case userMay of
+        Nothing                -> return Nothing
+        (Just (User id _ _ _)) -> return $ Just id
 getToken :: ActionM (Maybe TL.Text)
 getToken = do
     str <- header "Authorization"

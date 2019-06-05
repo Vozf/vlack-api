@@ -18,6 +18,8 @@ import           Control.Monad.IO.Class
 import           Data.Aeson
 import           Data.Pool                            (Pool, createPool,
                                                        withResource)
+import           Data.Set                             (Set, fromList, member)
+import qualified Data.Text                            as T
 import qualified Data.Text.Lazy                       as TL
 import           Database.MySQL.Simple
 import           Network.HTTP.Types.Status            (status201, status400)
@@ -72,10 +74,11 @@ routes pool = do
                 status status400
                 text e
             Right chatWithMessages -> viewChatWithMessages chatWithMessages
-    post "/chats/:id" $ do
-        id <- param "id" :: ActionM TL.Text
+    post "/chats/:chatId" $ do
+        chatId <- param "chatId" :: ActionM TL.Text
+        userId <- getUserIdFromToken
         message <- decodeBody :: ActionM (Maybe NewMessageBody)
-        eitherRes <- liftIO $ insertMessage pool id message
+        eitherRes <- liftIO $ insertMessage pool chatId userId message
         case eitherRes of
             Left e -> do
                 status status400
@@ -109,8 +112,11 @@ protectedResources request = do
     let path = pathInfo request
     return $ protect path
   where
-    protect (p:_) = p == "admin" -- all requests to /admin/* should be authenticated
-    protect _     = False -- other requests are allowed for anonymous users
+    protect (p:_) = not $ member p protectedSet
+    protect _     = True
+
+protectedSet :: Set T.Text
+protectedSet = fromList ["login", "register"]
 
 -- Parse the request body into the Article
 getArticleParam :: ActionT TL.Text IO (Maybe Article)

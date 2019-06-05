@@ -36,12 +36,8 @@ data Chat =
 
 instance ToJSON Chat
 
-data NewMessageBody =
-    NewMessageBody
-        { value  :: Text
-        , userId :: Integer
-        }
-    deriving (Show, Generic)
+newtype NewMessageBody = NewMessageBody{value :: Text}
+                           deriving (Show, Generic)
 
 instance FromJSON NewMessageBody
 
