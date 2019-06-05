@@ -20,6 +20,7 @@ import           Database.MySQL.Simple.Types
 import           GHC.Generics                       (Generic)
 import           GHC.Int
 import           Web.Scotty.Internal.Types          (ActionT)
+import Safe (headMay)
 
 -- DbConfig contains info needed to connect to MySQL server
 data DbConfig =
@@ -86,16 +87,15 @@ execSqlT pool args sql = withResource pool ins
     ins conn = withTransaction conn $ execute conn sql args
 
 --------------------------------------------------------------------------------
-findUserByLogin :: Pool Connection -> String -> IO (Maybe String)
+findUserByLogin :: Pool Connection -> String -> IO (Maybe (Integer, String))
 findUserByLogin pool login = do
     res <-
-        liftIO $ fetch pool (Only login) "SELECT * FROM user WHERE login=?" :: IO [( Integer
-                                                                                   , String
-                                                                                   , String)]
-    return $ password res
+        fetch pool (Only login) "SELECT id, password FROM user WHERE login=?" :: IO [( Integer
+                                                                                     , String)]
+    return $ idAndPassword res
   where
-    password [(_, _, pwd)] = Just pwd
-    password _             = Nothing
+    idAndPassword [(userId, pwd)] = Just (userId, pwd)
+    idAndPassword _ = Nothing
 
 --------------------------------------------------------------------------------
 listArticles :: Pool Connection -> IO [Article]
@@ -133,4 +133,3 @@ deleteArticle :: Pool Connection -> TL.Text -> ActionT TL.Text IO ()
 deleteArticle pool id = do
     liftIO $ execSqlT pool [id] "DELETE FROM article WHERE id=?"
     return ()
-

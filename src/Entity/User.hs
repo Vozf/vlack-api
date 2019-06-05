@@ -8,10 +8,13 @@ import           Database.MySQL.Simple (Connection, Only (Only))
 
 import qualified Data.Text.Lazy        as TL
 
+import           Data.Hash.MD5         (Str (Str), md5s)
 import           Data.Pool             (Pool)
+import           Data.Text.Lazy        (unpack)
 import           Data.Time.Clock       (UTCTime)
 import           Data.Tuple.Curry      (uncurryN)
-import           Domain                (User (User))
+import           Domain                (RegisterCredentials (RegisterCredentials),
+                                        User (User))
 import           Safe                  (headMay)
 
 getUser :: Pool Connection -> TL.Text -> IO (Either TL.Text User)
@@ -27,3 +30,12 @@ getUser pool id = do
         (Just firstUser) ->
             let user = uncurryN User firstUser
              in return $ Right user
+
+registerUser :: Pool Connection -> Maybe RegisterCredentials -> IO (Either TL.Text ())
+registerUser pool Nothing = return $ Left "Empty User"
+registerUser pool (Just (RegisterCredentials login password avatarURL name)) = do
+    execSqlT
+        pool
+        (login, md5s $ Str $ unpack password, avatarURL, name)
+        "INSERT INTO user(login, password, avatarURL, name) VALUES(?,?,?,?)"
+    return $ Right ()

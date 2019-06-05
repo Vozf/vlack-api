@@ -90,3 +90,23 @@ data User =
 instance ToJSON User
 
 instance FromJSON User
+
+data LoginCredentials =
+    LoginCredentials
+        { login    :: Text
+        , password :: Text
+        }
+    deriving (Show, Generic)
+
+instance FromJSON LoginCredentials
+
+data RegisterCredentials =
+    RegisterCredentials
+        { login     :: Text
+        , password  :: Text
+        , avatarURL :: Maybe Text
+        , name      :: Text
+        }
+    deriving (Show, Generic)
+
+instance FromJSON RegisterCredentials

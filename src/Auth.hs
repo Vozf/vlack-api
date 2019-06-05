@@ -4,9 +4,11 @@ module Auth where
 
 import           Db
 
-import           Data.Aeson            (Result (..), Value, decode, fromJSON)
+import           Data.Aeson            (Result (..), Value, decode, fromJSON,
+                                        toJSON)
 import qualified Data.ByteString       as B
 import           Data.Char             (isSpace)
+import           Data.Hash.MD5         (Str (..), md5s)
 import           Data.Map              (fromList, (!?))
 import           Data.Pool             (Pool, createPool, withResource)
 import           Data.String
@@ -14,15 +16,28 @@ import qualified Data.Text             as T
 import           Data.Text.Encoding    (decodeUtf8)
 import qualified Data.Text.Lazy        as TL
 import           Database.MySQL.Simple
-import           Domain                (User (User))
+import           Domain                (User (User), LoginCredentials(LoginCredentials))
 import qualified Web.JWT               as JWT
 import           Web.Scotty            (ActionM, header)
 
-verifyCredentials :: T.Text -> Pool Connection -> B.ByteString -> IO Bool
-verifyCredentials jwtSecret pool token =
+verifyToken :: T.Text -> Pool Connection -> B.ByteString -> IO Bool
+verifyToken jwtSecret pool token =
     case JWT.decodeAndVerifySignature (JWT.hmacSecret jwtSecret) (decodeUtf8 token) of
         Nothing -> return False
         Just _  -> return True
+
+createTokenFromCredentials ::
+       Pool Connection -> T.Text -> Maybe LoginCredentials -> IO (Either TL.Text TL.Text)
+createTokenFromCredentials pool jwtSecret Nothing = return $ Left "No credentials"
+createTokenFromCredentials pool jwtSecret (Just (LoginCredentials login password)) = do
+    pwd <- findUserByLogin pool (TL.unpack login)
+    let comparePasswords Nothing _ = Left "No such user"
+        comparePasswords (Just (userId, p)) password =
+            if p == (md5s $ Str password)
+                then Right userId
+                else Left "Incorrect password"
+        userIdEither = comparePasswords pwd (TL.unpack password)
+    return (jsonToToken jwtSecret . toJSON <$> userIdEither)
 
 getUserFromToken :: ActionM (Maybe User)
 getUserFromToken = do

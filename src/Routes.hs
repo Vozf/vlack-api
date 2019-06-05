@@ -35,7 +35,7 @@ routes pool = do
     middleware $ logStdout -- log all requests; for production use logStdout
     middleware $
         tokenAuth
-            (verifyCredentials pool) -- check if the user is authenticated for protected resources
+            (verifyToken superSecretJWT pool) -- check if the user is authenticated for protected resources
             "Haskell Blog Realm" {TokenAuth.authIsProtected = protectedResources} -- function which restricts access to some routes only for authenticated users
                        -- LIST
     get "/articles" $ do
@@ -74,7 +74,7 @@ routes pool = do
             Right chatWithMessages -> viewChatWithMessages chatWithMessages
     post "/chats/:id" $ do
         id <- param "id" :: ActionM TL.Text
-        message <- getMessageParam
+        message <- decodeBody :: ActionM (Maybe NewMessageBody)
         eitherRes <- liftIO $ insertMessage pool id message
         case eitherRes of
             Left e -> do
@@ -88,8 +88,19 @@ routes pool = do
             Left e -> do
                 status status400
                 text e
-            Right chatWithMessages -> Web.Scotty.json chatWithMessages
- 
+            Right user -> Web.Scotty.json user
+    post "/login" $ do
+        loginCredentials <- decodeBody :: ActionM (Maybe LoginCredentials)
+        tokenEither <- liftIO $ createTokenFromCredentials pool superSecretJWT loginCredentials
+        case tokenEither of
+            Left st     -> status status400 >> Web.Scotty.text st
+            Right token -> Web.Scotty.json token
+    post "/register" $ do
+        registerCredentials <- decodeBody :: ActionM (Maybe RegisterCredentials)
+        regRes <- liftIO $ registerUser pool registerCredentials
+        case regRes of
+            Left e     -> status status400 >> text e
+            Right user -> status status201
 
 -- The function knows which resources are available only for the
 -- authenticated users
@@ -109,8 +120,5 @@ getArticleParam = do
   where
     makeArticle s = ""
 
--- Parse the request body into the Article
-getMessageParam :: ActionT TL.Text IO (Maybe NewMessageBody)
-getMessageParam = do
-    b <- body
-    return (decode b :: Maybe NewMessageBody)
+decodeBody :: FromJSON a => ActionM (Maybe a)
+decodeBody = decode <$> body
