@@ -50,7 +50,7 @@ data Message =
         , createdAt  :: UTCTime
         , updatedAt  :: UTCTime
         , authorName :: Text
-        , avatarURL  :: Text
+        , avatarURL  :: Maybe Text
         }
     deriving (Show, Generic)
 

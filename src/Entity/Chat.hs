@@ -36,7 +36,7 @@ listChats pool = do
                                                  , UTCTime
                                                  , UTCTime
                                                  , TL.Text
-                                                 , TL.Text)]
+                                                 , Maybe TL.Text)]
     let mapChatAndMessage (chat, message) =
             ChatWithLastMessage (uncurryN Chat chat) (uncurryN Message message)
         splitChatAndMessage (c1, c2, c3, c4, m1, m2, m3, m4, m5, m6, m7, m8) =
@@ -63,7 +63,7 @@ findChat pool id = do
                                                                                            , UTCTime
                                                                                            , UTCTime
                                                                                            , TL.Text
-                                                                                           , TL.Text)]
+                                                                                           , Maybe TL.Text)]
     case headMay chatRes of
         Nothing -> return $ Left "No chat with such id found"
         (Just chat) ->
