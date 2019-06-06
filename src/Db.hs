@@ -1,17 +1,10 @@
 {-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Db where
 
-import           Domain
 
-import           Control.Monad.IO.Class
-import qualified Data.ByteString.Lazy.Char8         as BL
 import           Data.Pool                          (Pool, createPool,
                                                      withResource)
-import qualified Data.Text                          as T
-import qualified Data.Text.Lazy                     as TL
-import qualified Data.Text.Lazy.Encoding            as TL
 import qualified Database.MySQL.Base                as M
 import           Database.MySQL.Simple
 import           Database.MySQL.Simple.QueryParams
@@ -19,7 +12,6 @@ import           Database.MySQL.Simple.QueryResults
 import           Database.MySQL.Simple.Types
 import           GHC.Generics                       (Generic)
 import           GHC.Int
-import           Safe                               (headMay)
 import           Web.Scotty.Internal.Types          (ActionT)
 
 -- DbConfig contains info needed to connect to MySQL server
@@ -86,39 +78,3 @@ execSqlT pool args sql = withResource pool ins
   where
     ins conn = withTransaction conn $ execute conn sql args
 
---------------------------------------------------------------------------------
-listArticles :: Pool Connection -> IO [Article]
-listArticles pool = do
-    res <-
-        fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]
-    return $ map (\(id, title, bodyText) -> Article id title bodyText) res
-
-findArticle :: Pool Connection -> TL.Text -> IO (Maybe Article)
-findArticle pool id = do
-    res <-
-        fetch pool (Only id) "SELECT * FROM article WHERE id=?" :: IO [(Integer, TL.Text, TL.Text)]
-    return $ oneArticle res
-  where
-    oneArticle ((id, title, bodyText):_) = Just $ Article id title bodyText
-    oneArticle _                         = Nothing
-
-insertArticle :: Pool Connection -> Maybe Article -> ActionT TL.Text IO ()
-insertArticle pool Nothing = return ()
-insertArticle pool (Just (Article id title bodyText)) = do
-    liftIO $ execSqlT pool [title, bodyText] "INSERT INTO article(title, bodyText) VALUES(?,?)"
-    return ()
-
-updateArticle :: Pool Connection -> Maybe Article -> ActionT TL.Text IO ()
-updateArticle pool Nothing = return ()
-updateArticle pool (Just (Article id title bodyText)) = do
-    liftIO $
-        execSqlT
-            pool
-            [title, bodyText, (TL.decodeUtf8 $ BL.pack $ show id)]
-            "UPDATE article SET title=?, bodyText=? WHERE id=?"
-    return ()
-
-deleteArticle :: Pool Connection -> TL.Text -> ActionT TL.Text IO ()
-deleteArticle pool id = do
-    liftIO $ execSqlT pool [id] "DELETE FROM article WHERE id=?"
-    return ()
