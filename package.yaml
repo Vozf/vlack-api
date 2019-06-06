@@ -41,6 +41,9 @@ dependencies:
   - http-types
   - jwt
   - containers
+  - warp
+  - websockets
+  - wai-websockets
 
 library:
   source-dirs: src

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Routes
-    ( routes
+module App
+    ( application
     ) where
 
 import           Auth
@@ -30,8 +30,8 @@ import           Network.Wai.Middleware.Static
 import           Web.Scotty
 import           Web.Scotty.Internal.Types            (ActionT)
 
-routes :: Pool Connection -> ScottyM ()
-routes pool = do
+application :: Pool Connection -> IO Application
+application pool = scottyApp $ do
     middleware allowCors
     middleware $ staticPolicy (noDots >-> addBase "static") -- serve static files
     middleware logStdout -- log all requests; for production use logStdout
