@@ -6,7 +6,7 @@ module Domain where
 import           Data.Aeson
 import           Data.Text.Lazy
 import           Data.Time
-import           GHC.Generics            (Generic (..))
+import           GHC.Generics   (Generic (..))
 
 data Chat =
     Chat
@@ -19,8 +19,11 @@ data Chat =
 
 instance ToJSON Chat
 
-newtype NewMessageBody = NewMessageBody{value :: Text}
-                           deriving (Show, Generic)
+newtype NewMessageBody =
+    NewMessageBody
+        { value :: Text
+        }
+    deriving (Show, Generic)
 
 instance FromJSON NewMessageBody
 

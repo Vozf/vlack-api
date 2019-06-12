@@ -4,7 +4,7 @@ module Main where
 
 import           App
 import           Db
-import           SocketApp
+import           Socket.App
 
 import qualified Data.Configurator              as C
 import qualified Data.Configurator.Types        as C
