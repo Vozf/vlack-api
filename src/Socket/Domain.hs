@@ -8,11 +8,15 @@ module Socket.Domain
     , SocketMsgType(..)
     , prepare
     , SocketMsg(payload)
+    , ChanMsg
     ) where
 
-import           GHC.Generics (Generic)
+import           Data.ByteString.Lazy (ByteString)
+import           GHC.Generics         (Generic)
 
 import           Data.Aeson
+
+type ChanMsg = ByteString
 
 data SocketMsgType
     = NewMessageType
