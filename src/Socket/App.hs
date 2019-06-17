@@ -4,6 +4,7 @@
 
 module Socket.App where
 
+import           Auth
 import           Control.Concurrent         (forkIO, killThread, threadDelay)
 import           Control.Concurrent.Chan    (Chan, dupChan, readChan, writeChan)
 import           Control.Exception          (SomeException (..), handle)
@@ -13,20 +14,24 @@ import           Data.Aeson                 (FromJSON, ToJSON, decode, encode)
 import           Data.ByteString.Lazy       (ByteString)
 import           Data.ByteString.Lazy.Char8 as BS (pack, unpack)
 import           Data.Map                   (Map)
+import           Data.Pool                  (Pool)
 import           Data.Text
+import qualified Data.Text.Lazy             as TL
+import           Database.MySQL.Simple      (Connection)
 import           GHC.Generics               (Generic)
 import qualified Network.WebSockets         as WS
 import           Socket.Controller
+
 import           Socket.Domain
 
-wsapplication :: Chan ChanMsg -> WS.ServerApp
-wsapplication chan pending = do
+wsapplication :: Pool Connection -> Chan ChanMsg -> WS.ServerApp
+wsapplication pool chan pending = do
     conn <- WS.acceptRequest pending
     WS.forkPingThread conn 30
-    runConn conn chan
+    runConn pool chan conn
 
-runConn :: WS.Connection -> Chan ChanMsg -> IO ()
-runConn conn chan = do
+runConn :: Pool Connection -> Chan ChanMsg -> WS.Connection -> IO ()
+runConn pool chan conn = do
     let broadcast = writeChan chan
     commLine <- dupChan chan
     -- fork off a thread for reading from the duplicated channel
@@ -39,10 +44,17 @@ runConn conn chan = do
     handle (\(SomeException _) -> return ()) $
         fix $ \loop -> do
             (msg :: ByteString) <- WS.receiveData conn
-            let messageType = msgType <$> (decode msg :: Maybe SocketMsgWithoutPayload)
+            let message = decode msg :: Maybe SocketMsgWithoutPayload
+                messageType = msgType <$> message
             case messageType of
-                (Just NewMessageType) ->
-                    newMessage chan (decode msg :: Maybe (SocketMsg NewMessage))
+                (Just NewMessageRequestType) ->
+                    newMessage
+                        pool
+                        chan
+                        userMay
+                        (decode msg :: Maybe (SocketMsgRequest NewMessageRequest))
+                    where tok = token <$> message
+                          userMay = TL.pack <$> tok >>= getUserFromToken
                 _ -> WS.sendTextData conn $ ("fail> " :: ByteString) <> msg
             loop
     killThread reader -- kill after the loop ends

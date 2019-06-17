@@ -45,25 +45,27 @@ createTokenFromCredentials pool jwtSecret (Just (LoginCredentials login password
             Right userId -> getUser pool (TL.pack $ show userId)
     return (jsonToToken jwtSecret . toJSON <$> userEither)
 
-getUserFromToken :: ActionM (Maybe User)
-getUserFromToken = do
+getUserFromTokenM :: ActionM (Maybe User)
+getUserFromTokenM = do
     tokenMay <- getToken
-    let token = tokenMay >>= tokenToJson
-        user =
-            case token of
-                Nothing -> Nothing
-                Just token ->
-                    case fromJSON token of
-                        Error _   -> Nothing
-                        Success a -> Just a :: Maybe User
-    return user
+    return $ tokenMay >>= getUserFromToken
+
+getUserFromToken :: TL.Text -> Maybe User
+getUserFromToken token =
+    case tokenToJson token of
+        Nothing -> Nothing
+        Just token ->
+            case fromJSON token of
+                Error _   -> Nothing
+                Success a -> Just a :: Maybe User
 
 getUserIdFromToken :: ActionM (Maybe Integer)
 getUserIdFromToken = do
-    userMay <- getUserFromToken
+    userMay <- getUserFromTokenM
     case userMay of
         Nothing                -> return Nothing
         (Just (User id _ _ _)) -> return $ Just id
+
 getToken :: ActionM (Maybe TL.Text)
 getToken = do
     str <- header "Authorization"

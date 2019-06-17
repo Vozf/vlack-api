@@ -6,6 +6,7 @@ import           App
 import           Db
 import           Socket.App
 
+import           Control.Concurrent.Chan        (newChan)
 import qualified Data.Configurator              as C
 import qualified Data.Configurator.Types        as C
 import           Data.Pool                      (Pool, createPool, withResource)
@@ -14,7 +15,6 @@ import qualified Network.Wai.Handler.Warp       as Warp
 import qualified Network.Wai.Handler.WebSockets as WaiWs
 import qualified Network.WebSockets             as WS
 import           Web.Scotty
-import Control.Concurrent.Chan (newChan)
 
 -- Parse file "application.conf" and get the DB connection info
 makeDbConfig :: C.Config -> IO (Maybe Db.DbConfig)
@@ -35,4 +35,5 @@ main = do
             pool <- createPool (newConn conf) close 1 64 10
             chan <- newChan
             app <- application pool
-            Warp.runSettings settings $ WaiWs.websocketsOr WS.defaultConnectionOptions (wsapplication chan) app
+            let wsapp = wsapplication pool chan
+            Warp.runSettings settings $ WaiWs.websocketsOr WS.defaultConnectionOptions wsapp app

@@ -3,69 +3,94 @@
 {-# LANGUAGE FlexibleInstances     #-}
 
 module Socket.Domain
-    ( NewMessage(..)
+    ( NewMessageRequest(..)
+    , NewMessageResponse(..)
     , SocketMsgWithoutPayload(..)
-    , SocketMsgType(..)
+    , SocketMsgRequestType(..)
     , prepare
-    , SocketMsg(payload)
+    , SocketMsgRequest(payload)
     , ChanMsg
     ) where
 
-import           Data.ByteString.Lazy (ByteString)
-import           GHC.Generics         (Generic)
-
 import           Data.Aeson
+import           Data.ByteString.Lazy (ByteString)
+import           Domain
+import           GHC.Generics         (Generic)
 
 type ChanMsg = ByteString
 
-data SocketMsgType
-    = NewMessageType
-    | OldMessageType
+data SocketMsgRequestType
+    = NewMessageRequestType
+    | OldMessageRequestType
     deriving (Show, Generic)
 
-instance ToJSON SocketMsgType
+instance FromJSON SocketMsgRequestType
 
-instance FromJSON SocketMsgType
-
-class (FromJSON a, ToJSON a) =>
-      SocketMessage a
+class (FromJSON a) =>
+      SocketMessageRequest a
     where
-    getType :: a -> SocketMsgType
-    prepare :: a -> SocketMsg a
-    prepare a = SocketMsg (getType a) a
+    getType :: a -> SocketMsgRequestType
 
-data SocketMsg a =
-    SocketMsg
-        { msgType :: SocketMsgType
+data SocketMsgRequest a =
+    SocketMsgRequest
+        { msgType :: SocketMsgRequestType
+        , payload :: a
+        , token   :: String
+        }
+    deriving (Show, Generic)
+
+instance (FromJSON a) => FromJSON (SocketMsgRequest a)
+
+data SocketMsgWithoutPayload =
+    SocketMsgWithoutPayload
+        { msgType :: SocketMsgRequestType
+        , token   :: String
+        }
+    deriving (Show, Generic)
+
+instance FromJSON SocketMsgWithoutPayload
+
+-- socket message for response
+data SocketMsgResponseType
+    = NewMessageResponseType
+    | OldMessageResponseType
+    deriving (Show, Generic)
+
+instance ToJSON SocketMsgResponseType
+
+instance FromJSON SocketMsgResponseType
+
+class (ToJSON a) =>
+      SocketMessageResponse a
+    where
+    getResponseType :: a -> SocketMsgResponseType
+    prepare :: a -> SocketMsgResponse a
+    prepare a = SocketMsgResponse (getResponseType a) a
+
+data SocketMsgResponse a =
+    SocketMsgResponse
+        { msgType :: SocketMsgResponseType
         , payload :: a
         }
     deriving (Show, Generic)
 
-instance (ToJSON a) => ToJSON (SocketMsg a)
+instance (ToJSON a) => ToJSON (SocketMsgResponse a)
 
-instance (FromJSON a) => FromJSON (SocketMsg a)
-
-newtype SocketMsgWithoutPayload =
-    SocketMsgWithoutPayload
-        { msgType :: SocketMsgType
-        }
-    deriving (Show, Generic)
-
-instance ToJSON SocketMsgWithoutPayload
-
-instance FromJSON SocketMsgWithoutPayload
-
--- socket messages below
-data NewMessage =
-    NewMessage
+-- request socket messages below
+data NewMessageRequest =
+    NewMessageRequest
         { chatId :: Integer
         , value  :: String
         }
     deriving (Show, Generic)
 
-instance ToJSON NewMessage
+instance FromJSON NewMessageRequest
 
-instance FromJSON NewMessage
+instance SocketMessageRequest NewMessageRequest where
+    getType = const NewMessageRequestType
 
-instance SocketMessage NewMessage where
-    getType _ = NewMessageType
+--response socket messages below
+type NewMessageResponse = Message
+
+instance SocketMessageResponse NewMessageResponse where
+    getResponseType = const NewMessageResponseType
