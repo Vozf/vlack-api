@@ -1,1 +1,1 @@
-vlack-api-exe: run-server
+web: vlack-api-exe
