@@ -38,7 +38,7 @@ main = do
             pool <- createPool (newConn conf) close 1 64 10
             chan <- newChan
             httpApp <- httpApplication pool
-            let port = maybe 3000 read (portEnv >>= readMaybe) :: Int
+            let port = fromMaybe 3000 (portEnv >>= readMaybe) :: Int
                 settings = Warp.setPort port Warp.defaultSettings
                 wsApp = wsapplication pool chan
                 app = WaiWs.websocketsOr WS.defaultConnectionOptions wsApp httpApp
