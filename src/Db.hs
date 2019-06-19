@@ -1,7 +1,6 @@
-{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Db where
-
 
 import           Data.Pool                          (Pool, createPool,
                                                      withResource)
@@ -18,6 +17,7 @@ import           Web.Scotty.Internal.Types          (ActionT)
 data DbConfig =
     DbConfig
         { dbName     :: String
+        , dbHost     :: String
         , dbUser     :: String
         , dbPassword :: String
         }
@@ -29,7 +29,8 @@ newConn :: DbConfig -> IO Connection
 newConn conf =
     connect
         defaultConnectInfo
-            { connectUser = dbUser conf
+            { connectHost = dbHost conf
+            , connectUser = dbUser conf
             , connectPassword = dbPassword conf
             , connectDatabase = dbName conf
             }
@@ -77,4 +78,3 @@ execSqlT :: QueryParams q => Pool M.Connection -> q -> Query -> IO Int64
 execSqlT pool args sql = withResource pool ins
   where
     ins conn = withTransaction conn $ execute conn sql args
-
