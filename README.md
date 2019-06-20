@@ -1,3 +1,5 @@
+## Available at https://vlack.herokuapp.com
+
 # Installation guide
 - create MySQL schema `vlack` and import sql dump into it
 - update application.conf with db credentials
